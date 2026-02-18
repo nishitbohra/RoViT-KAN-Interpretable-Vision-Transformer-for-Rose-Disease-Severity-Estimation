@@ -214,9 +214,18 @@ class BaselineExperiment:
 def run_baseline_experiments(data_root: str = 'data', max_epochs: int = 30):
     # Load config
     config = get_config()
-    config.data.dataset_root = Path(data_root)
-    config.data.augmented_root = Path(data_root) / "Augmented Image"
-    config.data.original_root = Path(data_root) / "Original Image"
+    
+    # Handle path: if data_root already points to Augmented/Original Image, use it directly
+    data_root_path = Path(data_root)
+    if data_root_path.name in ["Augmented Image", "Original Image"]:
+        parent_dir = data_root_path.parent
+        config.data.augmented_root = parent_dir / "Augmented Image"
+        config.data.original_root = parent_dir / "Original Image"
+    else:
+        config.data.augmented_root = data_root_path / "Augmented Image"
+        config.data.original_root = data_root_path / "Original Image"
+    
+    config.data.dataset_root = data_root_path
     
     # Device
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')

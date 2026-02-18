@@ -20,8 +20,8 @@ def parse_args():
     parser.add_argument(
         '--data-root',
         type=str,
-        default='../Augmented Image',
-        help='Path to dataset root directory'
+        default='..',
+        help='Path to parent directory containing "Augmented Image" and "Original Image" folders'
     )
     
     parser.add_argument(

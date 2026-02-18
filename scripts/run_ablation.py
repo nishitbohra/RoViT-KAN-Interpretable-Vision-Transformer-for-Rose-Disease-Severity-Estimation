@@ -20,8 +20,8 @@ def parse_args():
     parser.add_argument(
         '--data-root',
         type=str,
-        default='../Augmented Image',
-        help='Path to dataset root directory'
+        default='..',
+        help='Path to parent directory containing "Augmented Image" and "Original Image" folders (default: .. which is parent of RoViT-KAN)'
     )
     
     parser.add_argument(
@@ -95,7 +95,7 @@ def main():
     
     # Load configuration
     config = Config()
-    config.data.augmented_root = Path(args.data_root)
+    config.data.augmented_root = Path(args.data_root) / "Augmented Image"
     config.train.batch_size = args.batch_size
     config.data.num_workers = args.num_workers
     
