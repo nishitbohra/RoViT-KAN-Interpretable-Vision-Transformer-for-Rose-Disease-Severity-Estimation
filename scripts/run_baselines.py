@@ -126,32 +126,31 @@ def main():
     # Sort by accuracy
     sorted_results = sorted(
         results.items(),
-        key=lambda x: x[1]['metrics'].get('accuracy', 0),
+        key=lambda x: x[1].get('accuracy', 0),
         reverse=True
     )
     
-    for model_name, result in sorted_results:
-        metrics = result['metrics']
+    for model_name, metrics in sorted_results:
         print(
             f"{model_name:<20} "
             f"{metrics.get('accuracy', 0):.4f}      "
             f"{metrics.get('macro_f1', 0):.4f}      "
             f"{metrics.get('fps', 0):.2f}      "
-            f"{metrics.get('params_m', 0):.2f}"
+            f"{metrics.get('params', 0)/1e6:.2f}"
         )
     
     print("-" * 80)
     print("\nBest Model:")
     best_model, best_result = sorted_results[0]
-    print(f"  {best_model} - Accuracy: {best_result['metrics']['accuracy']:.4f}")
+    print(f"  {best_model} - Accuracy: {best_result.get('accuracy', 0):.4f}")
     
     print("\nFastest Model:")
-    fastest = max(results.items(), key=lambda x: x[1]['metrics'].get('fps', 0))
-    print(f"  {fastest[0]} - FPS: {fastest[1]['metrics']['fps']:.2f}")
+    fastest = max(results.items(), key=lambda x: x[1].get('fps', 0))
+    print(f"  {fastest[0]} - FPS: {fastest[1].get('fps', 0):.2f}")
     
     print("\nMost Efficient (Params):")
-    efficient = min(results.items(), key=lambda x: x[1]['metrics'].get('params_m', float('inf')))
-    print(f"  {efficient[0]} - Params: {efficient[1]['metrics']['params_m']:.2f}M")
+    efficient = min(results.items(), key=lambda x: x[1].get('params', float('inf')))
+    print(f"  {efficient[0]} - Params: {efficient[1].get('params', 0)/1e6:.2f}M")
     
     print("\n" + "=" * 80)
 

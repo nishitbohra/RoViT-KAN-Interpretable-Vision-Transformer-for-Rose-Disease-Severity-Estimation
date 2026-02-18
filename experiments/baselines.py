@@ -40,6 +40,16 @@ class BaselineModel(nn.Module):
             'kan_severity': None,
             'features': None
         }
+    
+    def unfreeze_backbone(self):
+        for param in self.backbone.parameters():
+            param.requires_grad = True
+    
+    def enable_dropout(self):
+        pass
+    
+    def disable_dropout(self):
+        pass
 
 
 class BaselineExperiment:
