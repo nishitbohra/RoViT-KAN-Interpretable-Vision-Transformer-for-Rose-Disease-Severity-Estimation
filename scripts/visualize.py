@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 from configs.config import Config
 from models.rovit_kan import RoViTKAN
 from data.dataset import RoseLeafDataset
-from data.transforms import get_test_transforms
-from explainability.attention_maps import AttentionVisualizer
+from data.transforms import inference_transforms
+from explainability.attention_maps import ViTAttentionRollout
 from explainability.gradcam import GradCAMPlusPlus
 from explainability.kan_viz import KANVisualizer
 
@@ -105,7 +105,7 @@ def main():
     
     # Create dataset
     print("\nLoading dataset...")
-    test_transform = get_test_transforms(config)
+    test_transform = inference_transforms()
     
     test_dataset = RoseLeafDataset(
         root_dir=config.data.data_root,
@@ -149,10 +149,9 @@ def main():
     visualizers = {}
     
     if 'attention' in methods:
-        visualizers['attention'] = AttentionVisualizer(
+        visualizers['attention'] = ViTAttentionRollout(
             model=model,
-            device=device,
-            output_dir=output_dir / 'attention_maps'
+            device=device
         )
         print("✓ Attention visualizer initialized")
     

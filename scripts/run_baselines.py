@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 
 from configs.config import Config
 from data.dataset import RoseLeafDataset
-from data.transforms import get_train_transforms, get_test_transforms
+from data.transforms import augmented_transforms, inference_transforms
 from experiments.baselines import run_baseline_experiments
 
 
@@ -109,8 +109,8 @@ def main():
     
     # Create datasets
     print("\nLoading datasets...")
-    train_transform = get_train_transforms(config)
-    test_transform = get_test_transforms(config)
+    train_transform = augmented_transforms()
+    test_transform = inference_transforms()
     
     train_dataset = RoseLeafDataset(
         root_dir=config.data.data_root,
