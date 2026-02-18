@@ -1,6 +1,9 @@
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 import argparse
 import torch
-from pathlib import Path
 from torch.utils.data import DataLoader
 
 from configs.config import Config
@@ -92,17 +95,17 @@ def main():
     
     # Load configuration
     config = Config()
-    config.data.data_root = args.data_root
-    config.training.batch_size = args.batch_size
-    config.training.num_workers = args.num_workers
+    config.data.augmented_root = Path(args.data_root)
+    config.train.batch_size = args.batch_size
+    config.data.num_workers = args.num_workers
     
     # Adjust epochs if fast mode
     if args.fast:
-        config.training.num_epochs = 10
-        config.training.early_stopping_patience = 3
+        config.train.epochs = 10
+        config.train.early_stop_patience = 3
         print("\nRunning in FAST mode (10 epochs per experiment)")
     else:
-        config.training.num_epochs = args.epochs
+        config.train.epochs = args.epochs
     
     # Create datasets
     print("\nLoading datasets...")
@@ -110,24 +113,24 @@ def main():
     test_transform = inference_transforms()
     
     train_dataset = RoseLeafDataset(
-        root_dir=config.data.data_root,
-        split='train',
-        transform=train_transform,
-        mode=config.data.mode
+        root_dir=config.data.augmented_root,
+        class_names=config.data.class_names,
+        severity_map=config.data.severity_map,
+        transform=train_transform
     )
     
     val_dataset = RoseLeafDataset(
-        root_dir=config.data.data_root,
-        split='val',
-        transform=test_transform,
-        mode=config.data.mode
+        root_dir=config.data.augmented_root,
+        class_names=config.data.class_names,
+        severity_map=config.data.severity_map,
+        transform=test_transform
     )
     
     test_dataset = RoseLeafDataset(
-        root_dir=config.data.data_root,
-        split='test',
-        transform=test_transform,
-        mode=config.data.mode
+        root_dir=config.data.augmented_root,
+        class_names=config.data.class_names,
+        severity_map=config.data.severity_map,
+        transform=test_transform
     )
     
     print(f"Train samples: {len(train_dataset)}")
@@ -137,25 +140,25 @@ def main():
     # Create data loaders
     train_loader = DataLoader(
         train_dataset,
-        batch_size=config.training.batch_size,
+        batch_size=config.train.batch_size,
         shuffle=True,
-        num_workers=config.training.num_workers,
+        num_workers=config.data.num_workers,
         pin_memory=True
     )
     
     val_loader = DataLoader(
         val_dataset,
-        batch_size=config.training.batch_size,
+        batch_size=config.train.batch_size,
         shuffle=False,
-        num_workers=config.training.num_workers,
+        num_workers=config.data.num_workers,
         pin_memory=True
     )
     
     test_loader = DataLoader(
         test_dataset,
-        batch_size=config.training.batch_size,
+        batch_size=config.train.batch_size,
         shuffle=False,
-        num_workers=config.training.num_workers,
+        num_workers=config.data.num_workers,
         pin_memory=True
     )
     

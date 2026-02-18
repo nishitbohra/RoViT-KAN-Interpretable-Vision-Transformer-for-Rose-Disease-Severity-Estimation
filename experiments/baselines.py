@@ -246,3 +246,5 @@ def run_baseline_experiments(data_root: str = 'data', max_epochs: int = 30):
     experiment.save_comparison_table(results, save_path)
     
     print("\nBaseline experiments complete!")
+    
+    return results

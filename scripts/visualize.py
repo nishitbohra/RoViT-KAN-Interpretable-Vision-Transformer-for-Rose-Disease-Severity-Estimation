@@ -1,6 +1,9 @@
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 import argparse
 import torch
-from pathlib import Path
 from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 

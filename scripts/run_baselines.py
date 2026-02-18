@@ -1,6 +1,9 @@
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 import argparse
 import torch
-from pathlib import Path
 from torch.utils.data import DataLoader
 
 from configs.config import Config
@@ -92,94 +95,22 @@ def main():
     if torch.cuda.is_available():
         torch.cuda.manual_seed(args.seed)
     
-    # Device setup
-    device = torch.device(args.device if torch.cuda.is_available() and args.device == 'cuda' else 'cpu')
-    print(f"Using device: {device}")
-    
     # Create output directory
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     
-    # Load configuration
-    config = Config()
-    config.data.data_root = args.data_root
-    config.training.batch_size = args.batch_size
-    config.training.num_epochs = args.epochs
-    config.training.num_workers = args.num_workers
+    print("=" * 80)
+    print("Baseline Model Experiments")
+    print("=" * 80)
+    print(f"Data root: {args.data_root}")
+    print(f"Epochs: {args.epochs}")
+    print(f"Output directory: {output_dir}")
+    print("=" * 80)
     
-    # Create datasets
-    print("\nLoading datasets...")
-    train_transform = augmented_transforms()
-    test_transform = inference_transforms()
-    
-    train_dataset = RoseLeafDataset(
-        root_dir=config.data.data_root,
-        split='train',
-        transform=train_transform,
-        mode=config.data.mode
-    )
-    
-    val_dataset = RoseLeafDataset(
-        root_dir=config.data.data_root,
-        split='val',
-        transform=test_transform,
-        mode=config.data.mode
-    )
-    
-    test_dataset = RoseLeafDataset(
-        root_dir=config.data.data_root,
-        split='test',
-        transform=test_transform,
-        mode=config.data.mode
-    )
-    
-    print(f"Train samples: {len(train_dataset)}")
-    print(f"Val samples: {len(val_dataset)}")
-    print(f"Test samples: {len(test_dataset)}")
-    
-    # Create data loaders
-    train_loader = DataLoader(
-        train_dataset,
-        batch_size=config.training.batch_size,
-        shuffle=True,
-        num_workers=config.training.num_workers,
-        pin_memory=True
-    )
-    
-    val_loader = DataLoader(
-        val_dataset,
-        batch_size=config.training.batch_size,
-        shuffle=False,
-        num_workers=config.training.num_workers,
-        pin_memory=True
-    )
-    
-    test_loader = DataLoader(
-        test_dataset,
-        batch_size=config.training.batch_size,
-        shuffle=False,
-        num_workers=config.training.num_workers,
-        pin_memory=True
-    )
-    
-    # Determine which models to run
-    if args.models is None or 'all' in args.models:
-        model_names = ['resnet50', 'vgg16', 'efficientnet_b0', 'mobilenet_v3', 'swin_tiny', 'deit_tiny']
-    else:
-        model_names = args.models
-    
-    print(f"\nRunning baseline experiments for: {', '.join(model_names)}")
-    
-    # Run baseline experiments
+    # Run baseline experiments (function creates its own config and dataloaders)
     results = run_baseline_experiments(
-        config=config,
-        train_loader=train_loader,
-        val_loader=val_loader,
-        test_loader=test_loader,
-        device=device,
-        output_dir=output_dir,
-        model_names=model_names,
-        pretrained=args.pretrained
+        data_root=args.data_root,
+        max_epochs=args.epochs
     )
     
     # Print summary
