@@ -418,25 +418,11 @@ Contributions are welcome! Please:
 ## Contact
 
 For questions or issues, please open an issue on GitHub or contact:
-- **Email**: your.email@example.com
+- **Email**: nishitbohra2002@gmail.com
 - **GitHub**: [@yourusername](https://github.com/yourusername)
 
 ---
 
-## Acknowledgments
-
-- **DeiT**: Data-efficient Image Transformers ([paper](https://arxiv.org/abs/2012.12877))
-- **KAN**: Kolmogorov-Arnold Networks ([paper](https://arxiv.org/abs/2404.19756))
-- **timm**: PyTorch Image Models ([repo](https://github.com/huggingface/pytorch-image-models))
-- **Rose Leaf Dataset**: Dataset contributors and maintainers
-
----
-
-## References
-
-1. Touvron, H., et al. (2021). "Training data-efficient image transformers & distillation through attention." *ICML*.
-2. Liu, Z., et al. (2024). "KAN: Kolmogorov-Arnold Networks." *arXiv*.
-3. Selvaraju, R. R., et al. (2017). "Grad-CAM: Visual Explanations from Deep Networks via Gradient-based Localization." *ICCV*.
 
 ---
 
