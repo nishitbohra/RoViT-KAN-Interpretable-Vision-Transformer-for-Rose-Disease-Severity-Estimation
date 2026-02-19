@@ -58,12 +58,12 @@ class BaselineExperiment:
         self.config = config
         self.device = device
         
-        # Baseline models to compare (skip ResNet50 - already completed)
+        # Baseline models to compare (lightweight models only for efficiency)
+        # ResNet50 already completed: 99.42% accuracy
+        # Skipping VGG16 (134M params) and Swin-T (27M params) due to long training time on CPU
         self.baseline_models = {
-            'VGG16': 'vgg16',
             'EfficientNet-B0': 'efficientnet_b0',
             'MobileNetV3-Large': 'mobilenetv3_large_100',
-            'Swin-T': 'swin_tiny_patch4_window7_224',
             'DeiT-Tiny': 'deit_tiny_patch16_224'
         }
     
