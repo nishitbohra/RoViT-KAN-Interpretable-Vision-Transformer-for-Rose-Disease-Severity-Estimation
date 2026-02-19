@@ -315,6 +315,28 @@ Where:
 - Very low Brier score (0.0324) indicates well-calibrated uncertainty estimates
 - MAE of 0.9434 shows good ordinal severity prediction
 
+### Baseline Model Comparison
+
+*Training: 10 epochs on CPU for computational efficiency (sufficient to demonstrate comparative trends)*
+
+| Model | Accuracy | Macro F1 | Parameters | FPS | Status |
+|-------|----------|----------|------------|-----|--------|
+| **RoViT-KAN (Ours)** | **99.16%** | **99.21%** | 5.7M | 2.6 | ✓ Complete |
+| ResNet50 | 99.42% | 99.41% | 23.5M | 13.5 | ✓ Complete |
+| VGG16 | - | - | 134.3M | - | 🔄 Training |
+| EfficientNet-B0 | - | - | 4.0M | - | ⏳ Pending |
+| MobileNetV3-Large | - | - | 4.2M | - | ⏳ Pending |
+| Swin-Tiny | - | - | 27.5M | - | ⏳ Pending |
+| DeiT-Tiny | - | - | 5.5M | - | ⏳ Pending |
+
+**Key Observations:**
+- RoViT-KAN achieves competitive accuracy (99.16%) with significantly fewer parameters than ResNet50
+- ResNet50 achieves 99.42% accuracy but requires 4× more parameters (23.5M vs 5.7M)
+- RoViT-KAN provides additional benefits: ordinal regression, uncertainty quantification, and KAN-based interpretability
+- Trade-off: ResNet50 is faster (13.5 FPS vs 2.6 FPS) due to simpler architecture
+
+*Note: Baseline models trained for 10 epochs (reduced from 30) to demonstrate comparative performance trends under computational constraints. Full model (RoViT-KAN) was trained for 50 epochs with early stopping.*
+
 ### Ablation Study Results
 
 *Note: Ablation study experiments to be conducted. Expected variants:*

@@ -58,9 +58,8 @@ class BaselineExperiment:
         self.config = config
         self.device = device
         
-        # Baseline models to compare
+        # Baseline models to compare (skip ResNet50 - already completed)
         self.baseline_models = {
-            'ResNet50': 'resnet50',
             'VGG16': 'vgg16',
             'EfficientNet-B0': 'efficientnet_b0',
             'MobileNetV3-Large': 'mobilenetv3_large_100',
