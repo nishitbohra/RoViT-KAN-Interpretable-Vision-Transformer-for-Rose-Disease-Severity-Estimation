@@ -50,7 +50,8 @@ class AblationModel(nn.Module):
         
         # Classification head (always present)
         self.classification_head = ClassificationHead(
-            in_features=self.backbone.embed_dim,
+            embed_dim=self.backbone.embed_dim,
+            hidden_dim=config.model.hidden_dim,
             num_classes=config.model.num_classes,
             dropout=config.model.dropout
         )
@@ -58,8 +59,9 @@ class AblationModel(nn.Module):
         # Ordinal head (optional)
         if not remove_ordinal:
             self.ordinal_head = OrdinalHead(
-                in_features=self.backbone.embed_dim,
-                num_thresholds=config.model.num_classes - 1,
+                embed_dim=self.backbone.embed_dim,
+                hidden_dim=config.model.hidden_dim,
+                num_classes=config.model.num_classes,
                 dropout=config.model.dropout
             )
         else:
@@ -68,7 +70,8 @@ class AblationModel(nn.Module):
         # Uncertainty head (optional)
         if not remove_uncertainty:
             self.uncertainty_head = UncertaintyHead(
-                in_features=self.backbone.embed_dim,
+                embed_dim=self.backbone.embed_dim,
+                hidden_dim=config.model.hidden_dim,
                 dropout=config.model.dropout
             )
         else:
@@ -77,12 +80,9 @@ class AblationModel(nn.Module):
         # KAN severity module (optional)
         if not remove_kan:
             self.kan_module = KANSeverityModule(
-                in_features=self.backbone.embed_dim,
-                hidden_features=config.model.kan_hidden_dim,
-                num_severity_levels=config.model.num_classes,
-                num_splines=config.model.kan_num_splines,
-                spline_order=config.model.kan_spline_order,
-                dropout=config.model.dropout
+                layers=config.model.kan_layers,
+                num_knots=config.model.kan_num_knots,
+                degree=config.model.kan_degree
             )
         else:
             self.kan_module = None
@@ -96,29 +96,51 @@ class AblationModel(nn.Module):
         # Classification (always present)
         logits = self.classification_head(features)
         
-        outputs = {'logits': logits}
+        # Use keys compatible with evaluator and trainer
+        outputs = {
+            'cls_logits': logits,  # Changed from 'logits' to 'cls_logits'
+            'features': features
+        }
         
         # Ordinal prediction (optional)
         if self.ordinal_head is not None:
             ordinal_logits = self.ordinal_head(features)
             outputs['ordinal_logits'] = ordinal_logits
+        else:
+            outputs['ordinal_logits'] = None
         
         # Uncertainty estimation (optional)
         if self.uncertainty_head is not None:
-            epistemic, aleatoric = self.uncertainty_head(features)
-            outputs['epistemic_uncertainty'] = epistemic
-            outputs['aleatoric_uncertainty'] = aleatoric
+            mu, log_var = self.uncertainty_head(features)
+            outputs['mu'] = mu
+            outputs['log_var'] = log_var
+        else:
+            outputs['mu'] = None
+            outputs['log_var'] = None
         
         # KAN severity (optional)
         if self.kan_module is not None:
-            severity_score, kan_features = self.kan_module(features)
-            outputs['severity_score'] = severity_score
-            outputs['kan_features'] = kan_features
+            severity_score = self.kan_module(features)
+            outputs['kan_severity'] = severity_score  # Changed from 'severity_score' to 'kan_severity'
+        else:
+            outputs['kan_severity'] = None
         
         return outputs
     
     def set_curriculum_stage(self, stage: int):
         self.curriculum_stage = stage
+
+    def freeze_backbone(self):
+        """Freeze all backbone parameters (called by Trainer at start of training)."""
+        for param in self.backbone.parameters():
+            param.requires_grad = False
+        print("Backbone frozen")
+
+    def unfreeze_backbone(self):
+        """Unfreeze all backbone parameters (called by Trainer after warm-up epochs)."""
+        for param in self.backbone.parameters():
+            param.requires_grad = True
+        print("Backbone unfrozen")
 
 
 class AblationExperiment:
@@ -249,20 +271,26 @@ class AblationExperiment:
                 remove_kan=ablation_cfg.remove_kan
             ).to(self.device)
         
-        # Modify config for curriculum
+        # Modify config for curriculum and paths
         train_config = copy.deepcopy(self.config)
         if ablation_cfg.disable_curriculum:
-            train_config.training.use_curriculum = False
+            train_config.flags.curriculum = False
+        
+        # CRITICAL: Set experiment-specific checkpoint directory
+        train_config.paths.checkpoints_dir = exp_dir
+        train_config.paths.results_dir = exp_dir
+        train_config.paths.figures_dir = exp_dir / 'figures'
+        train_config.paths.figures_dir.mkdir(parents=True, exist_ok=True)
         
         # Create optimizer and scheduler
         optimizer = build_optimizer(model, train_config)
         scheduler = build_scheduler(optimizer, train_config)
         
         # Create loss function
-        # Get class weights from training dataset
+        # Get class weights - unwrap all Subset/wrapper layers to reach RoseLeafDataset
         train_dataset = self.train_loader.dataset
-        if hasattr(train_dataset, 'dataset'):
-            train_dataset = train_dataset.dataset  # Unwrap from Subset
+        while not hasattr(train_dataset, 'get_class_weights'):
+            train_dataset = train_dataset.dataset
         
         class_weights = train_dataset.get_class_weights().to(self.device)
         
@@ -297,11 +325,14 @@ class AblationExperiment:
         evaluator = Evaluator(
             model=model,
             test_loader=self.test_loader,
-            config=self.config,
+            config=train_config,   # use experiment-specific config (has exp_dir paths)
             device=self.device
         )
         
         metrics = evaluator.evaluate()
+        
+        # CRITICAL: Save metrics to experiment directory
+        logger.save_metrics(metrics, filename='test_metrics.json')
         
         return metrics
     

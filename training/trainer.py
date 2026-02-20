@@ -1,12 +1,19 @@
 import torch
 import torch.nn as nn
-from torch.cuda.amp import autocast, GradScaler
 from typing import Dict, Optional
 from tqdm import tqdm
 import numpy as np
 from pathlib import Path
 
 from data.transforms import cutmix_or_mixup
+
+# Use the non-deprecated amp API (works for both CPU and CUDA)
+try:
+    from torch.amp import autocast, GradScaler
+    _AMP_DEVICE = 'cuda'
+except ImportError:
+    from torch.cuda.amp import autocast, GradScaler
+    _AMP_DEVICE = 'cuda'
 
 
 class Trainer:
@@ -32,8 +39,11 @@ class Trainer:
         self.device = device
         self.logger = logger
         
-        # Mixed precision training
-        self.scaler = GradScaler() if config.flags.mixed_precision else None
+        # Mixed precision training — only useful on CUDA; disable silently on CPU
+        if config.flags.mixed_precision and device.type == 'cuda':
+            self.scaler = GradScaler('cuda')
+        else:
+            self.scaler = None
         
         # Early stopping
         self.best_val_loss = float('inf')
@@ -83,7 +93,7 @@ class Trainer:
             
             # Forward pass with mixed precision
             if self.scaler is not None:
-                with autocast():
+                with autocast('cuda'):
                     outputs = self.model(images)
                     
                     # Compute loss

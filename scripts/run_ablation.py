@@ -5,11 +5,41 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 import argparse
 import torch
 from torch.utils.data import DataLoader
+from PIL import Image
 
 from configs.config import Config
 from data.dataset import RoseLeafDataset
 from data.transforms import augmented_transforms, inference_transforms
 from experiments.ablation import run_ablation_study
+from torch.utils.data import random_split, Subset
+
+
+# Must be top-level (not inside main) so multiprocessing can pickle it
+class TransformSubset(torch.utils.data.Dataset):
+    """Wraps a Subset and re-applies a different transform by reloading from disk."""
+    def __init__(self, subset, transform):
+        self.subset = subset
+        self.transform = transform
+        # Resolve the base RoseLeafDataset and the flat index mapping
+        self._samples, self._indices = self._resolve(subset)
+
+    def _resolve(self, dataset):
+        """Walk through Subset wrappers to get base dataset + flattened indices."""
+        indices = list(range(len(dataset)))
+        while isinstance(dataset, Subset):
+            indices = [dataset.indices[i] for i in indices]
+            dataset = dataset.dataset
+        return dataset.samples, indices
+
+    def __len__(self):
+        return len(self._indices)
+
+    def __getitem__(self, idx):
+        sample = self._samples[self._indices[idx]]
+        image = Image.open(sample['path']).convert('RGB')
+        if self.transform:
+            image = self.transform(image)
+        return image, sample['class_idx'], sample['severity']
 
 
 def parse_args():
@@ -101,9 +131,10 @@ def main():
     
     # Adjust epochs if fast mode
     if args.fast:
-        config.train.epochs = 10
+        config.train.epochs = 5
         config.train.early_stop_patience = 3
-        print("\nRunning in FAST mode (10 epochs per experiment)")
+        config.train.batch_size = 64    # Larger batch = fewer steps per epoch
+        print("\nRunning in FAST mode (5 epochs, 1000 samples, batch=64 per experiment)")
     else:
         config.train.epochs = args.epochs
     
@@ -111,55 +142,70 @@ def main():
     print("\nLoading datasets...")
     train_transform = augmented_transforms()
     test_transform = inference_transforms()
-    
-    train_dataset = RoseLeafDataset(
+
+    # Load the full dataset ONCE
+    full_dataset = RoseLeafDataset(
         root_dir=config.data.augmented_root,
         class_names=config.data.class_names,
         severity_map=config.data.severity_map,
         transform=train_transform
     )
-    
-    val_dataset = RoseLeafDataset(
-        root_dir=config.data.augmented_root,
-        class_names=config.data.class_names,
-        severity_map=config.data.severity_map,
-        transform=test_transform
+
+    total = len(full_dataset)
+
+    # In fast mode, use only a small subset (1000 samples) to keep ablation quick
+    if args.fast:
+        subset_size = min(1000, total)
+        indices = torch.randperm(total)[:subset_size].tolist()
+        full_dataset = Subset(full_dataset, indices)
+        total = subset_size
+        print(f"FAST mode: using {total} samples (subset)")
+
+    # Proper 70/15/15 train/val/test split from the SAME dataset
+    train_size = int(0.70 * total)
+    val_size   = int(0.15 * total)
+    test_size  = total - train_size - val_size
+
+    train_dataset, val_dataset, test_dataset = random_split(
+        full_dataset,
+        [train_size, val_size, test_size],
+        generator=torch.Generator().manual_seed(args.seed)
     )
-    
-    test_dataset = RoseLeafDataset(
-        root_dir=config.data.augmented_root,
-        class_names=config.data.class_names,
-        severity_map=config.data.severity_map,
-        transform=test_transform
-    )
-    
+
+    # Apply correct transforms: val/test need inference transforms
+    val_dataset  = TransformSubset(val_dataset,  test_transform)
+    test_dataset = TransformSubset(test_dataset, test_transform)
+
     print(f"Train samples: {len(train_dataset)}")
-    print(f"Val samples: {len(val_dataset)}")
-    print(f"Test samples: {len(test_dataset)}")
-    
+    print(f"Val   samples: {len(val_dataset)}")
+    print(f"Test  samples: {len(test_dataset)}")
+
+    # num_workers=0 on Windows avoids multiprocessing pickling issues
+    nw = 0
+
     # Create data loaders
     train_loader = DataLoader(
         train_dataset,
         batch_size=config.train.batch_size,
         shuffle=True,
-        num_workers=config.data.num_workers,
-        pin_memory=True
+        num_workers=nw,
+        pin_memory=False
     )
-    
+
     val_loader = DataLoader(
         val_dataset,
         batch_size=config.train.batch_size,
         shuffle=False,
-        num_workers=config.data.num_workers,
-        pin_memory=True
+        num_workers=nw,
+        pin_memory=False
     )
-    
+
     test_loader = DataLoader(
         test_dataset,
         batch_size=config.train.batch_size,
         shuffle=False,
-        num_workers=config.data.num_workers,
-        pin_memory=True
+        num_workers=nw,
+        pin_memory=False
     )
     
     print("\n" + "=" * 80)

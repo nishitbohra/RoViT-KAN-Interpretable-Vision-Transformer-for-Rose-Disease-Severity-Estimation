@@ -11,9 +11,7 @@ from evaluation.metrics import (
     accuracy, macro_f1, mae, spearman_rho, brier_score, 
     ece, fps, count_params, per_class_metrics
 )
-
-
-class Evaluator:
+from sklearn.metrics import confusion_matrix as sk_confusion_matrix, f1_score
     
     def __init__(self, model, test_loader, config, device):
         self.model = model.to(device)
@@ -77,10 +75,12 @@ class Evaluator:
         # Classification metrics
         metrics['accuracy'] = accuracy(y_true, y_pred)
         metrics['macro_f1'] = macro_f1(y_true, y_pred)
+        metrics['weighted_f1'] = f1_score(y_true, y_pred, average='weighted') * 100
         
         # Ordinal metrics
         metrics['mae'] = mae(severity_true, severity_pred)
         metrics['spearman_rho'] = spearman_rho(severity_true, severity_pred)
+        metrics['spearman'] = metrics['spearman_rho']  # alias used by ablation
         
         # Calibration metrics
         metrics['brier_score'] = brier_score(y_true, y_probs)
@@ -90,6 +90,7 @@ class Evaluator:
         # Efficiency metrics
         metrics['fps'] = fps(self.model, (1, 3, 224, 224), self.device, n=100)
         metrics['params'] = count_params(self.model)
+        metrics['params_m'] = metrics['params'] / 1e6  # alias in millions
         
         # Per-class metrics
         per_class = per_class_metrics(y_true, y_pred, self.config.data.class_names)
@@ -133,7 +134,9 @@ class Evaluator:
     
     def _save_results(self, metrics: Dict, y_true, y_pred, y_probs, 
                      severity_true, severity_pred):
-        results_file = self.config.paths.results_dir / "evaluation_results.txt"
+        results_dir = self.config.paths.results_dir
+        results_dir.mkdir(parents=True, exist_ok=True)
+        results_file = results_dir / "evaluation_results.txt"
         
         with open(results_file, 'w', encoding='utf-8') as f:
             f.write("RoViT-KAN Evaluation Results\n")
@@ -162,8 +165,6 @@ class Evaluator:
                                 severity_true, severity_pred):
         fig_dir = self.config.paths.figures_dir
         fig_dir.mkdir(parents=True, exist_ok=True)
-        
-        # 1. Confusion Matrix
         self._plot_confusion_matrix(y_true, y_pred, fig_dir)
         
         # 2. Confidence Histogram

@@ -50,17 +50,17 @@ class LossConfig:
     mu_unc: float = 0.5
     nu_kan: float = 0.5
     focal_gamma: float = 2.0
-    focal_alpha: List[float] = None
+    focal_alpha: List[float] = field(default=None)   # populated at runtime from class weights
 
 
 @dataclass
 class ModelConfig:
     backbone: str = "deit_tiny_patch16_224"
-    embed_dim: int = None
+    embed_dim: int = 384              # DeiT-Tiny embed dim
     pretrained: bool = True
     freeze_backbone: bool = False
     num_classes: int = 4
-    kan_layers: List[int] = None
+    kan_layers: List[int] = field(default_factory=lambda: [384, 64, 16, 1])
     kan_num_knots: int = 5
     kan_degree: int = 3
     kan_hidden_dim: int = 64
