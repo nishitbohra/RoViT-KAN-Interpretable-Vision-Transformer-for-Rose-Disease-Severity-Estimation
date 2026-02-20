@@ -1,6 +1,5 @@
 # RoViT-KAN: Interpretable Vision Transformer for Rose Disease Severity Estimation
 # Python 3.8+ required
-# Install: pip install -r requirements.txt
 
 # Core Deep Learning
 torch>=1.12.0
@@ -33,15 +32,3 @@ opencv-python>=4.5.0
 
 # Optional: For faster training (if CUDA available)
 # nvidia-dali-cuda110>=1.0.0  # Uncomment if using CUDA 11.0
-
-# Development & Testing (optional)
-pytest>=6.2.0
-pytest-cov>=2.12.0
-black>=21.6b0
-flake8>=3.9.0
-
-# Notes:
-# - For CPU-only: torch and torchvision will automatically install CPU versions
-# - For CUDA: Install PyTorch with CUDA first from https://pytorch.org/get-started/locally/
-# - Tested on Python 3.8, 3.9, 3.10, 3.11, 3.12
-# - Windows, Linux, and macOS compatible

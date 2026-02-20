@@ -71,15 +71,12 @@ class Trainer:
         correct = 0
         total = 0
         
-        progress_bar = tqdm(
-            self.train_loader,
-            desc=f"Epoch {epoch} (Stage {stage})",
-            dynamic_ncols=True,
-            leave=True,
-            file=sys.stdout
-        )
+        # Print epoch header once
+        print(f"Epoch {epoch}/{self.config.train.epochs} (Stage {stage}): ", end='', flush=True)
         
-        for batch_idx, (images, class_labels, severity_labels) in enumerate(progress_bar):
+        num_batches = len(self.train_loader)
+        
+        for batch_idx, (images, class_labels, severity_labels) in enumerate(self.train_loader):
             images = images.to(self.device)
             class_labels = class_labels.to(self.device)
             severity_labels = severity_labels.to(self.device)
@@ -155,11 +152,13 @@ class Trainer:
             total += class_labels.size(0)
             correct += predicted.eq(class_labels).sum().item()
             
-            # Update progress bar (refresh=False avoids double-print on Windows)
-            progress_bar.set_postfix({
-                'loss': f"{loss.item():.4f}",
-                'acc': f"{100. * correct / total:.2f}%"
-            }, refresh=False)
+            # Print progress every 10% of batches
+            progress_pct = int((batch_idx + 1) / num_batches * 100)
+            if (batch_idx + 1) % max(1, num_batches // 10) == 0 or (batch_idx + 1) == num_batches:
+                print(f"{progress_pct}%", end='...' if (batch_idx + 1) < num_batches else '', flush=True)
+        
+        # Print completion with metrics
+        print(f" Loss: {total_loss/num_batches:.4f}, Acc: {100.*correct/total:.2f}%")
         
         # Compute average metrics
         num_batches = len(self.train_loader)
