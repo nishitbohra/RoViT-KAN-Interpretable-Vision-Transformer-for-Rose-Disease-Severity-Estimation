@@ -5,13 +5,15 @@ from typing import Dict
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.metrics import confusion_matrix as sk_confusion_matrix
+from sklearn.metrics import confusion_matrix as sk_confusion_matrix, f1_score
 
 from evaluation.metrics import (
     accuracy, macro_f1, mae, spearman_rho, brier_score, 
     ece, fps, count_params, per_class_metrics
 )
-from sklearn.metrics import confusion_matrix as sk_confusion_matrix, f1_score
+
+
+class Evaluator:
     
     def __init__(self, model, test_loader, config, device):
         self.model = model.to(device)
@@ -114,7 +116,7 @@ from sklearn.metrics import confusion_matrix as sk_confusion_matrix, f1_score
         print(f"Accuracy:       {metrics['accuracy']:.2f}%")
         print(f"Macro F1:       {metrics['macro_f1']:.2f}%")
         print(f"MAE:            {metrics['mae']:.4f}")
-        print(f"Spearman's ρ:   {metrics['spearman_rho']:.4f}")
+        print(f"Spearman rho:   {metrics['spearman_rho']:.4f}")
         print(f"Brier Score:    {metrics['brier_score']:.4f}")
         print(f"ECE:            {metrics['ece']:.4f}")
         print(f"FPS:            {metrics['fps']:.1f}")

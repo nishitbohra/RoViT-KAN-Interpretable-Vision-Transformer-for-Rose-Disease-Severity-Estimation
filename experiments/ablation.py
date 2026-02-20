@@ -213,7 +213,7 @@ class AblationExperiment:
                 print(f"\n{'=' * 80}")
                 print(f"Experiment: {ablation_cfg.name}")
                 print(f"Description: {ablation_cfg.description}")
-                print(f"Status: ✓ ALREADY COMPLETED - SKIPPING")
+                print(f"Status: [DONE] ALREADY COMPLETED - SKIPPING")
                 print(f"{'=' * 80}\n")
                 
                 # Try to load cached metrics if available

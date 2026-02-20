@@ -3,6 +3,7 @@ import torch.nn as nn
 from typing import Dict, Optional
 from tqdm import tqdm
 import numpy as np
+import sys
 from pathlib import Path
 
 from data.transforms import cutmix_or_mixup
@@ -70,7 +71,13 @@ class Trainer:
         correct = 0
         total = 0
         
-        progress_bar = tqdm(self.train_loader, desc=f"Epoch {epoch} (Stage {stage})")
+        progress_bar = tqdm(
+            self.train_loader,
+            desc=f"Epoch {epoch} (Stage {stage})",
+            dynamic_ncols=True,
+            leave=True,
+            file=sys.stdout
+        )
         
         for batch_idx, (images, class_labels, severity_labels) in enumerate(progress_bar):
             images = images.to(self.device)
@@ -148,11 +155,11 @@ class Trainer:
             total += class_labels.size(0)
             correct += predicted.eq(class_labels).sum().item()
             
-            # Update progress bar
+            # Update progress bar (refresh=False avoids double-print on Windows)
             progress_bar.set_postfix({
                 'loss': f"{loss.item():.4f}",
                 'acc': f"{100. * correct / total:.2f}%"
-            })
+            }, refresh=False)
         
         # Compute average metrics
         num_batches = len(self.train_loader)
@@ -274,7 +281,7 @@ class Trainer:
                 # Save best checkpoint
                 checkpoint_path = self.config.paths.checkpoints_dir / "best_model.pth"
                 self.save_checkpoint(checkpoint_path, epoch, val_metrics)
-                print(f"  ✓ New best model saved (Val Loss: {val_metrics['loss']:.4f})")
+                print(f"  [BEST] New best model saved (Val Loss: {val_metrics['loss']:.4f})")
             else:
                 self.patience_counter += 1
                 print(f"  No improvement ({self.patience_counter}/{self.config.train.early_stop_patience})")
