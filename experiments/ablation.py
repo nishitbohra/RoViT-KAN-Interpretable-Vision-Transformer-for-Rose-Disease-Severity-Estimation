@@ -7,12 +7,14 @@ from dataclasses import dataclass
 
 from configs.config import Config
 from models.rovit_kan import RoViTKAN
-from models.backbone import DeiTBackbone
+from models.backbone import DeiTTinyBackbone
 from models.heads import ClassificationHead, OrdinalHead, UncertaintyHead
 from models.kan import KANSeverityModule
 from training.trainer import Trainer
+from training.losses import JointLoss
+from training.optimizer import build_optimizer, build_scheduler
 from evaluation.evaluator import Evaluator
-from results.logger import ResultLogger
+from results.logger import ExperimentLogger
 
 
 @dataclass
@@ -41,10 +43,9 @@ class AblationModel(nn.Module):
         self.remove_kan = remove_kan
         
         # Backbone
-        self.backbone = DeiTBackbone(
-            model_name=config.model.backbone,
+        self.backbone = DeiTTinyBackbone(
             pretrained=config.model.pretrained,
-            freeze_backbone=config.model.freeze_backbone
+            freeze=config.model.freeze_backbone
         )
         
         # Classification head (always present)
@@ -182,6 +183,31 @@ class AblationExperiment:
         print("=" * 80)
         
         for ablation_cfg in self.ablation_configs:
+            # Check if experiment already completed
+            exp_dir = self.output_dir / ablation_cfg.name
+            checkpoint_path = exp_dir / 'best_model.pth'
+            
+            if checkpoint_path.exists():
+                print(f"\n{'=' * 80}")
+                print(f"Experiment: {ablation_cfg.name}")
+                print(f"Description: {ablation_cfg.description}")
+                print(f"Status: ✓ ALREADY COMPLETED - SKIPPING")
+                print(f"{'=' * 80}\n")
+                
+                # Try to load cached metrics if available
+                metrics_path = exp_dir / 'test_metrics.json'
+                if metrics_path.exists():
+                    import json
+                    with open(metrics_path, 'r') as f:
+                        metrics = json.load(f)
+                    self.results[ablation_cfg.name] = {
+                        'config': ablation_cfg,
+                        'metrics': metrics
+                    }
+                    print(f"{ablation_cfg.name} Results (cached):")
+                    self._print_metrics(metrics)
+                continue
+            
             print(f"\n{'=' * 80}")
             print(f"Experiment: {ablation_cfg.name}")
             print(f"Description: {ablation_cfg.description}")
@@ -228,29 +254,51 @@ class AblationExperiment:
         if ablation_cfg.disable_curriculum:
             train_config.training.use_curriculum = False
         
+        # Create optimizer and scheduler
+        optimizer = build_optimizer(model, train_config)
+        scheduler = build_scheduler(optimizer, train_config)
+        
+        # Create loss function
+        # Get class weights from training dataset
+        train_dataset = self.train_loader.dataset
+        if hasattr(train_dataset, 'dataset'):
+            train_dataset = train_dataset.dataset  # Unwrap from Subset
+        
+        class_weights = train_dataset.get_class_weights().to(self.device)
+        
+        loss_fn = JointLoss(
+            lambda_ord=train_config.loss.lambda_ord,
+            mu_unc=train_config.loss.mu_unc,
+            nu_kan=train_config.loss.nu_kan,
+            focal_gamma=train_config.loss.focal_gamma,
+            focal_alpha=class_weights,
+            num_classes=train_config.data.num_classes
+        )
+        
         # Create logger
-        logger = ResultLogger(exp_dir / "training.log")
+        logger = ExperimentLogger(exp_dir, ablation_cfg.name)
         
         # Train model
         trainer = Trainer(
             model=model,
             train_loader=self.train_loader,
             val_loader=self.val_loader,
+            optimizer=optimizer,
+            scheduler=scheduler,
+            loss_fn=loss_fn,
             config=train_config,
             device=self.device,
-            output_dir=exp_dir,
             logger=logger
         )
         
-        trainer.train()
+        history = trainer.fit()
         
         # Evaluate on test set
         evaluator = Evaluator(
             model=model,
             test_loader=self.test_loader,
             config=self.config,
-            device=self.device,
-            output_dir=exp_dir
+            device=self.device
         )
         
         metrics = evaluator.evaluate()

@@ -9,7 +9,7 @@ from models.kan import KANSeverityModule
 class RoViTKAN(nn.Module):
     def __init__(
         self,
-        embed_dim: int = None,
+        config_or_embed_dim = None,
         hidden_dim: int = 128,
         num_classes: int = 4,
         kan_layers: list = None,
@@ -19,6 +19,22 @@ class RoViTKAN(nn.Module):
         pretrained: bool = True
     ):
         super().__init__()
+        
+        # Handle config object or individual parameters
+        if hasattr(config_or_embed_dim, 'model'):
+            # It's a Config object
+            config = config_or_embed_dim
+            embed_dim = config.model.embed_dim
+            hidden_dim = config.model.hidden_dim
+            num_classes = config.data.num_classes
+            kan_layers = config.model.kan_layers
+            kan_num_knots = config.model.kan_num_knots
+            kan_degree = config.model.kan_degree
+            dropout = config.model.dropout
+            pretrained = config.model.pretrained
+        else:
+            # Individual parameters
+            embed_dim = config_or_embed_dim
         
         # Backbone: DeiT-Tiny feature extractor
         self.backbone = DeiTTinyBackbone(pretrained=pretrained, freeze=False)

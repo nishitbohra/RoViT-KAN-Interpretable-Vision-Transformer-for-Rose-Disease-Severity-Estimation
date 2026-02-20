@@ -36,6 +36,7 @@ class TrainConfig:
     learning_rate: float = 1e-4
     weight_decay: float = 1e-4
     early_stop_patience: int = 10
+    use_curriculum: bool = True
     seeds: List[int] = field(default_factory=lambda: [42, 123, 999])
     stage_1_epochs: int = 10
     stage_2_epochs: int = 25
@@ -57,9 +58,14 @@ class ModelConfig:
     backbone: str = "deit_tiny_patch16_224"
     embed_dim: int = None
     pretrained: bool = True
+    freeze_backbone: bool = False
+    num_classes: int = 4
     kan_layers: List[int] = None
     kan_num_knots: int = 5
     kan_degree: int = 3
+    kan_hidden_dim: int = 64
+    kan_num_splines: int = 5
+    kan_spline_order: int = 3
     dropout: float = 0.3
     hidden_dim: int = 128
 

@@ -321,19 +321,30 @@ Where:
 
 | Model | Accuracy | Macro F1 | Parameters | FPS | Status |
 |-------|----------|----------|------------|-----|--------|
-| **RoViT-KAN (Ours)** | **99.16%** | **99.21%** | 5.7M | 2.6 | ✓ Complete |
+| **DeiT-Tiny** | **99.65%** | **99.70%** | 5.5M | 36.7 | ✓ Complete |
+| **EfficientNet-B0** | **99.65%** | **99.66%** | 4.0M | 18.4 | ✓ Complete |
+| MobileNetV3-Large | 99.52% | 99.51% | 4.2M | **45.4** | ✓ Complete |
 | ResNet50 | 99.42% | 99.41% | 23.5M | 13.5 | ✓ Complete |
-| VGG16 | - | - | 134.3M | - | 🔄 Training |
-| EfficientNet-B0 | - | - | 4.0M | - | ⏳ Pending |
-| MobileNetV3-Large | - | - | 4.2M | - | ⏳ Pending |
-| Swin-Tiny | - | - | 27.5M | - | ⏳ Pending |
-| DeiT-Tiny | - | - | 5.5M | - | ⏳ Pending |
+| **RoViT-KAN (Ours)** | **99.16%** | **99.21%** | 5.7M | 2.6 | ✓ Complete |
 
 **Key Observations:**
-- RoViT-KAN achieves competitive accuracy (99.16%) with significantly fewer parameters than ResNet50
-- ResNet50 achieves 99.42% accuracy but requires 4× more parameters (23.5M vs 5.7M)
-- RoViT-KAN provides additional benefits: ordinal regression, uncertainty quantification, and KAN-based interpretability
-- Trade-off: ResNet50 is faster (13.5 FPS vs 2.6 FPS) due to simpler architecture
+- **DeiT-Tiny and EfficientNet-B0 achieve highest accuracy (99.65%)** with compact architectures
+- **MobileNetV3-Large is fastest (45.4 FPS)** with competitive accuracy (99.52%)
+- **RoViT-KAN achieves competitive accuracy (99.16%)** despite lower raw performance
+- **RoViT-KAN's unique advantages** not captured by standard metrics:
+  - Ordinal severity regression for disease progression modeling
+  - Aleatoric uncertainty quantification for reliability assessment
+  - KAN-based interpretable severity scoring
+  - Multi-task learning framework
+- **Trade-off Analysis:**
+  - Pure accuracy: DeiT-Tiny/EfficientNet-B0 (99.65%)
+  - Speed: MobileNetV3-Large (45.4 FPS)
+  - Interpretability + Uncertainty: RoViT-KAN (2.6 FPS, but provides confidence scores and severity estimates)
+  
+**Model Selection Guidance:**
+- For **deployment** (speed priority): MobileNetV3-Large
+- For **accuracy** (best F1): DeiT-Tiny
+- For **clinical applications** (interpretability + uncertainty): RoViT-KAN
 
 *Note: Baseline models trained for 10 epochs (reduced from 30) to demonstrate comparative performance trends under computational constraints. Full model (RoViT-KAN) was trained for 50 epochs with early stopping.*
 
