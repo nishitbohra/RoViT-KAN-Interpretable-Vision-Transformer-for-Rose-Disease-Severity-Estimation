@@ -1,0 +1,4 @@
+,accuracy,macro_f1,fps,params
+EfficientNet-B0,99.65,99.66,18.4,4012672.0
+DeiT-Tiny,99.65,99.7,36.71,5525188.0
+MobileNetV3-Large,99.52,99.51,45.35,4207156.0

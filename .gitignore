@@ -20,10 +20,10 @@ wheels/
 .installed.cfg
 *.egg
 
-# PyTorch
-*.pth
-*.pt
-*.ckpt
+# PyTorch (keep trained models)
+# *.pth   # Now tracked for trained models
+# *.pt    # Now tracked for trained models
+# *.ckpt  # Now tracked for checkpoints
 
 # Jupyter Notebook
 .ipynb_checkpoints
@@ -49,12 +49,12 @@ venv.bak/
 Thumbs.db
 
 # Project specific
-outputs/
-checkpoints/
-results/
+# outputs/     # Now tracked
+# checkpoints/ # Now tracked
+# results/     # Now tracked
 logs/
 wandb/
-*.log
+# *.log        # Now tracking important log files
 
 # Data (keep structure but ignore images)
 data/
