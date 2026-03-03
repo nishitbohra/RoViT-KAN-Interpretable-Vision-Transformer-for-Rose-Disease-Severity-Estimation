@@ -152,10 +152,17 @@ class Trainer:
             total += class_labels.size(0)
             correct += predicted.eq(class_labels).sum().item()
             
-            # Print progress every 10% of batches
+            # Print progress at 10%, 20%, 30%, ..., 100%
             progress_pct = int((batch_idx + 1) / num_batches * 100)
-            if (batch_idx + 1) % max(1, num_batches // 10) == 0 or (batch_idx + 1) == num_batches:
-                print(f"{progress_pct}%", end='...' if (batch_idx + 1) < num_batches else '', flush=True)
+            prev_pct = int(batch_idx / num_batches * 100) if batch_idx > 0 else 0
+            
+            # Print every 10% milestone
+            if progress_pct // 10 > prev_pct // 10:
+                milestone = (progress_pct // 10) * 10
+                if milestone == 100:
+                    print(f"100%", end='', flush=True)
+                else:
+                    print(f"{milestone}%..", end='', flush=True)
         
         # Print completion with metrics
         print(f" Loss: {total_loss/num_batches:.4f}, Acc: {100.*correct/total:.2f}%")
