@@ -1,0 +1,39 @@
+{
+    "accuracy": 99.9,
+    "macro_f1": 99.89642330392266,
+    "weighted_f1": 99.89999513925788,
+    "mae": 0.0,
+    "spearman_rho": 1.0,
+    "spearman": 1.0,
+    "brier_score": 0.06003545969724655,
+    "ece": 0.2058372289836407,
+    "fps": 36.31667228319202,
+    "params": 5599689.0,
+    "params_m": 5.599689,
+    "per_class": {
+        "Healthy Leaf": {
+            "precision": 100.0,
+            "recall": 100.0,
+            "f1": 100.0,
+            "support": 766.0
+        },
+        "Leaf Holes": {
+            "precision": 99.59623149394348,
+            "recall": 100.0,
+            "f1": 99.79770734996627,
+            "support": 740.0
+        },
+        "Black Spot": {
+            "precision": 100.0,
+            "recall": 99.5768688293371,
+            "f1": 99.78798586572438,
+            "support": 709.0
+        },
+        "Dry Leaf": {
+            "precision": 100.0,
+            "recall": 100.0,
+            "f1": 100.0,
+            "support": 785.0
+        }
+    }
+}
