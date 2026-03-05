@@ -1,0 +1,38 @@
+RoViT-KAN Evaluation Results
+============================================================
+
+Accuracy:       99.83%
+Macro F1:       99.83%
+MAE:            0.3544
+Spearman's rho: 0.9676
+Brier Score:    0.1838
+ECE:            0.3667
+FPS:            2.3
+Parameters:     5,681,303
+
+Per-Class Metrics:
+------------------------------------------------------------
+Healthy Leaf:
+  Precision: 100.00%
+  Recall:    100.00%
+  F1-Score:  100.00%
+  Support:   766
+
+Leaf Holes:
+  Precision: 99.60%
+  Recall:    99.73%
+  F1-Score:  99.66%
+  Support:   740
+
+Black Spot:
+  Precision: 99.72%
+  Recall:    99.58%
+  F1-Score:  99.65%
+  Support:   709
+
+Dry Leaf:
+  Precision: 100.00%
+  Recall:    100.00%
+  F1-Score:  100.00%
+  Support:   785
+
