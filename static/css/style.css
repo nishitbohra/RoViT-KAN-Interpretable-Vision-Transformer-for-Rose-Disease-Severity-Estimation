@@ -1,0 +1,218 @@
+/* Custom styles for RoViT-KAN Web Interface */
+
+/* Smooth scrolling */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Animation for results */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#results-container > div {
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* Confidence ring animation */
+.confidence-ring circle:last-child {
+    transition: stroke-dasharray 0.5s ease-in-out;
+}
+
+/* Severity bar gradient */
+.severity-bar {
+    background: linear-gradient(
+        to right,
+        #22c55e 0%,
+        #22c55e 25%,
+        #eab308 50%,
+        #f97316 75%,
+        #ef4444 100%
+    );
+}
+
+/* HTMX loading states */
+.htmx-request .htmx-indicator {
+    display: inline-flex !important;
+}
+
+.htmx-request.htmx-indicator {
+    display: inline-flex !important;
+}
+
+/* Button states */
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* Image hover effects */
+.heatmap-container img {
+    transition: transform 0.3s ease;
+}
+
+.heatmap-container:hover img {
+    transform: scale(1.02);
+}
+
+/* Progress bar animation */
+.progress-bar-fill {
+    animation: fillBar 1s ease-out forwards;
+}
+
+@keyframes fillBar {
+    from {
+        width: 0;
+    }
+}
+
+/* Card hover effects */
+.bg-white.rounded-lg.shadow-md {
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.bg-white.rounded-lg.shadow-md:hover {
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Drop zone states */
+.drop-zone {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.drop-zone.dragover {
+    border-color: #3b82f6;
+    background-color: #eff6ff;
+    transform: scale(1.02);
+}
+
+/* Severity indicator */
+.severity-indicator {
+    position: relative;
+    height: 4px;
+    border-radius: 2px;
+    background: #e5e7eb;
+    overflow: visible;
+}
+
+.severity-indicator::after {
+    content: '';
+    position: absolute;
+    top: -4px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: currentColor;
+    transform: translateX(-50%);
+    transition: left 0.5s ease;
+}
+
+/* Tooltip styles */
+.tooltip {
+    position: relative;
+}
+
+.tooltip::before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 4px 8px;
+    background: #1f2937;
+    color: white;
+    font-size: 12px;
+    border-radius: 4px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s, visibility 0.2s;
+}
+
+.tooltip:hover::before {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .confidence-ring svg {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .confidence-ring span {
+        font-size: 14px;
+    }
+}
+
+/* Print styles */
+@media print {
+    nav, footer {
+        display: none;
+    }
+    
+    .bg-white {
+        box-shadow: none;
+        border: 1px solid #e5e7eb;
+    }
+}
+
+/* Focus styles for accessibility */
+button:focus,
+input:focus {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+}
+
+/* Loading spinner */
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+/* Fade transition for HTMX swaps */
+.htmx-added {
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* Error state styles */
+.bg-red-50 {
+    border-left: 4px solid #ef4444;
+}
+
+/* Success state styles */
+.bg-green-50 {
+    border-left: 4px solid #22c55e;
+}

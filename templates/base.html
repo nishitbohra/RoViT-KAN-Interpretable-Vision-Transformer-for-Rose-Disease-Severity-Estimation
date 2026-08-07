@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}RoViT-KAN Rose Disease Detection{% endblock %}</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    
+    <!-- Chart.js for visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/style.css">
+    
+    <style>
+        .drop-zone {
+            border: 3px dashed #cbd5e1;
+            transition: all 0.3s ease;
+        }
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+        .severity-bar {
+            height: 8px;
+            border-radius: 4px;
+            background: linear-gradient(to right, #22c55e 0%, #eab308 50%, #ef4444 100%);
+        }
+        .confidence-ring {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .confidence-ring svg {
+            transform: rotate(-90deg);
+        }
+        .heatmap-container {
+            position: relative;
+            display: inline-block;
+        }
+        .heatmap-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            opacity: 0.5;
+            mix-blend-mode: overlay;
+        }
+    </style>
+    
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <span class="text-2xl font-bold text-green-700">🌹 RoViT-KAN</span>
+                    <span class="ml-2 text-sm text-gray-500">Rose Disease Detection</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Home</a>
+                    <a href="/health" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium" hx-boost="true">Health</a>
+                    <a href="/model-info" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium" hx-boost="true">Model Info</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 mt-12">
+        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+            <p class="text-center text-sm text-gray-500">
+                RoViT-KAN: Interpretable Vision Transformer for Rose Disease Severity Estimation
+            </p>
+        </div>
+    </footer>
+
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

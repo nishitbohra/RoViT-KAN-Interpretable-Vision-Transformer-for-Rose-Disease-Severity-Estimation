@@ -1,0 +1,156 @@
+<!-- Results Template - Returned by HTMX -->
+<div class="space-y-6">
+    <!-- Prediction Header -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-800">{{ predicted_class }}</h2>
+                <p class="text-sm text-gray-500 mt-1">
+                    Confidence: {{ "%.2f"|format(confidence * 100) }}% | 
+                    Inference: {{ "%.1f"|format(inference_time_ms) }}ms
+                </p>
+            </div>
+            <div class="confidence-ring">
+                <svg width="80" height="80" viewBox="0 0 80 80">
+                    <circle cx="40" cy="40" r="35" fill="none" stroke="#e5e7eb" stroke-width="8"/>
+                    <circle cx="40" cy="40" r="35" fill="none" stroke="{% if confidence > 0.9 %}#22c55e{% elif confidence > 0.7 %}#eab308{% else %}#ef4444{% endif %}" 
+                            stroke-width="8" 
+                            stroke-dasharray="{{ confidence * 220 }} 220"
+                            stroke-linecap="round"/>
+                </svg>
+                <span class="absolute text-lg font-bold text-gray-800">{{ "%.0f"|format(confidence * 100) }}%</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Class Probabilities -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Class Probabilities</h3>
+        <div class="space-y-3">
+            {% for class_name, prob in class_probabilities.items() %}
+            <div>
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-gray-700">{{ class_name }}</span>
+                    <span class="font-medium {% if class_name == predicted_class %}text-green-600{% else %}text-gray-600{% endif %}">
+                        {{ "%.2f"|format(prob * 100) }}%
+                    </span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                    <div class="bg-{% if class_name == predicted_class %}green-600{% elif loop.index == 1 %}green-500{% elif loop.index == 2 %}yellow-500{% elif loop.index == 3 %}orange-500{% else %}red-500{% endif %} h-2.5 rounded-full transition-all duration-500" 
+                         style="width: {{ prob * 100 }}%"></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Severity Analysis -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Severity Analysis</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- Ordinal Severity -->
+            <div class="bg-gray-50 rounded-lg p-4 text-center">
+                <div class="text-3xl font-bold text-blue-600">{{ "%.2f"|format(ordinal_severity) }}</div>
+                <div class="text-sm text-gray-600 mt-1">Ordinal Severity</div>
+                <div class="mt-2">
+                    <div class="severity-bar"></div>
+                    <div class="flex justify-between text-xs text-gray-500 mt-1">
+                        <span>Healthy</span>
+                        <span>Severe</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- KAN Severity -->
+            <div class="bg-gray-50 rounded-lg p-4 text-center">
+                <div class="text-3xl font-bold text-purple-600">{{ "%.2f"|format(kan_severity) }}</div>
+                <div class="text-sm text-gray-600 mt-1">KAN Severity</div>
+                <div class="mt-2 text-xs text-gray-500">Spline-based continuous scoring</div>
+            </div>
+            
+            <!-- Uncertainty -->
+            <div class="bg-gray-50 rounded-lg p-4 text-center">
+                <div class="text-3xl font-bold {% if uncertainty_std < 0.3 %}text-green-600{% elif uncertainty_std < 0.6 %}text-yellow-600{% else %}text-red-600{% endif %}">
+                    {{ "%.2f"|format(uncertainty_std) }}
+                </div>
+                <div class="text-sm text-gray-600 mt-1">Uncertainty (σ)</div>
+                <div class="mt-2 text-xs text-gray-500">
+                    {% if uncertainty_std < 0.3 %}Low uncertainty{% elif uncertainty_std < 0.6 %}Medium uncertainty{% else %}High uncertainty{% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Explainability -->
+    {% if explainability %}
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Model Explainability</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Attention Map -->
+            <div class="space-y-2">
+                <h4 class="text-sm font-medium text-gray-700">Vision Transformer Attention</h4>
+                <div class="relative rounded-lg overflow-hidden border border-gray-200">
+                    <img src="data:image/png;base64,{{ explainability.attention_overlay }}" 
+                         alt="Attention Overlay" 
+                         class="w-full h-auto">
+                </div>
+                <p class="text-xs text-gray-500">
+                    Shows where the model focuses attention on the leaf
+                </p>
+            </div>
+            
+            <!-- Grad-CAM++ -->
+            <div class="space-y-2">
+                <h4 class="text-sm font-medium text-gray-700">Grad-CAM++ Activation</h4>
+                <div class="relative rounded-lg overflow-hidden border border-gray-200">
+                    <img src="data:image/png;base64,{{ explainability.gradcam_overlay }}" 
+                         alt="Grad-CAM++ Overlay" 
+                         class="w-full h-auto">
+                </div>
+                <p class="text-xs text-gray-500">
+                    Highlights regions most important for classification
+                </p>
+            </div>
+        </div>
+        
+        <!-- Raw Heatmaps (collapsible) -->
+        <div class="mt-4">
+            <button onclick="toggleHeatmaps()" 
+                    class="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                Show Raw Heatmaps ▼
+            </button>
+            <div id="raw-heatmaps" class="hidden mt-3 grid grid-cols-2 gap-4">
+                <div>
+                    <h5 class="text-xs font-medium text-gray-600 mb-1">Attention Heatmap</h5>
+                    <img src="data:image/png;base64,{{ explainability.attention_map }}" 
+                         alt="Attention Map" 
+                         class="w-full rounded border border-gray-200">
+                </div>
+                <div>
+                    <h5 class="text-xs font-medium text-gray-600 mb-1">Grad-CAM++ Heatmap</h5>
+                    <img src="data:image/png;base64,{{ explainability.gradcam }}" 
+                         alt="Grad-CAM++" 
+                         class="w-full rounded border border-gray-200">
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Timestamp -->
+    <div class="text-right text-xs text-gray-400">
+        Analysis completed: {{ timestamp }}
+    </div>
+</div>
+
+<script>
+    function toggleHeatmaps() {
+        const el = document.getElementById('raw-heatmaps');
+        el.classList.toggle('hidden');
+    }
+    
+    // Initialize any charts if needed
+    document.addEventListener('htmx:afterSettle', function(evt) {
+        // Charts would be initialized here if using Chart.js
+    });
+</script>

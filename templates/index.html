@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <!-- Left Column: Upload Section -->
+    <div class="space-y-6">
+        <!-- Upload Card -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Upload Rose Leaf Image</h2>
+            
+            <form id="upload-form"
+                  hx-post="/predict"
+                  hx-encoding="multipart/form-data"
+                  hx-target="#results-container"
+                  hx-indicator="#loading-indicator"
+                  class="space-y-4">
+                
+                <!-- Drop Zone -->
+                <div id="drop-zone" 
+                     class="drop-zone rounded-lg p-8 text-center cursor-pointer"
+                     onclick="document.getElementById('file-input').click()">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    <p class="mt-2 text-sm text-gray-600">
+                        <span class="font-medium text-blue-600">Click to upload</span> or drag and drop
+                    </p>
+                    <p class="mt-1 text-xs text-gray-500">PNG, JPG up to 10MB</p>
+                    <input type="file" 
+                           id="file-input" 
+                           name="file" 
+                           accept="image/*" 
+                           class="hidden"
+                           required
+                           onchange="previewImage(this)">
+                </div>
+                
+                <!-- Image Preview -->
+                <div id="image-preview" class="hidden">
+                    <div class="relative">
+                        <img id="preview-img" src="" alt="Preview" class="max-h-64 mx-auto rounded-lg shadow-sm">
+                        <button type="button" 
+                                onclick="clearPreview()"
+                                class="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Submit Button -->
+                <button type="submit" 
+                        id="submit-btn"
+                        disabled
+                        class="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors">
+                    Analyze Image
+                </button>
+            </form>
+            
+            <!-- Loading Indicator -->
+            <div id="loading-indicator" class="htmx-indicator mt-4 text-center">
+                <div class="inline-flex items-center space-x-2">
+                    <svg class="animate-spin h-5 w-5 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span class="text-gray-600">Analyzing image...</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Supported Classes -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-3">Detectable Diseases</h3>
+            <div class="grid grid-cols-2 gap-3">
+                {% for class_name in class_names %}
+                <div class="flex items-center space-x-2 p-2 bg-gray-50 rounded">
+                    <div class="w-3 h-3 rounded-full
+                        {% if loop.index == 1 %}bg-green-500
+                        {% elif loop.index == 2 %}bg-yellow-500
+                        {% elif loop.index == 3 %}bg-orange-500
+                        {% else %}bg-red-500{% endif %}"></div>
+                    <span class="text-sm text-gray-700">{{ class_name }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Right Column: Results -->
+    <div id="results-container" class="space-y-6">
+        <!-- Initial State -->
+        <div class="bg-gray-100 rounded-lg p-8 text-center">
+            <svg class="mx-auto h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            <h3 class="mt-4 text-lg font-medium text-gray-900">Ready to Analyze</h3>
+            <p class="mt-2 text-gray-500">Upload a rose leaf image to get started with disease detection and severity estimation.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Image preview functionality
+    function previewImage(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('preview-img').src = e.target.result;
+                document.getElementById('image-preview').classList.remove('hidden');
+                document.getElementById('drop-zone').classList.add('hidden');
+                document.getElementById('submit-btn').disabled = false;
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+    
+    function clearPreview() {
+        document.getElementById('file-input').value = '';
+        document.getElementById('image-preview').classList.add('hidden');
+        document.getElementById('drop-zone').classList.remove('hidden');
+        document.getElementById('submit-btn').disabled = true;
+    }
+    
+    // Drag and drop functionality
+    const dropZone = document.getElementById('drop-zone');
+    
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, preventDefaults, false);
+    });
+    
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, highlight, false);
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, unhighlight, false);
+    });
+    
+    function highlight(e) {
+        dropZone.classList.add('dragover');
+    }
+    
+    function unhighlight(e) {
+        dropZone.classList.remove('dragover');
+    }
+    
+    dropZone.addEventListener('drop', handleDrop, false);
+    
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        document.getElementById('file-input').files = files;
+        previewImage(document.getElementById('file-input'));
+    }
+</script>
+{% endblock %}
